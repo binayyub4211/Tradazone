@@ -1,3 +1,30 @@
+/**
+ * ADR-003: InvoiceDetail Component — Stack & Design Decisions
+ *
+ * Status: Accepted
+ * Date: 2026-06-01
+ *
+ * Context:
+ * InvoiceDetail must (a) display live invoice/customer data, (b) trigger
+ * client-side PDF generation, and (c) navigate to a print-optimised preview —
+ * all without a backend round-trip.
+ *
+ * Decisions:
+ * 1. Data access via useData() / useAuth() Context hooks — avoids prop-drilling
+ *    and keeps the component decoupled from the data-fetching layer.
+ * 2. Dynamic import of html2pdf.js inside handleDownload — keeps it out of the
+ *    initial bundle; loaded only when the user clicks Download.
+ * 3. Off-screen InvoiceLayout (position fixed, left -9999px) — gives html2pdf a
+ *    fully-rendered DOM node styled for A4 without affecting the visible layout.
+ * 4. useRef for the PDF target — avoids re-renders triggered by state changes
+ *    during the async export flow.
+ *
+ * Consequences:
+ * + Zero extra network requests; instant page load.
+ * + PDF fidelity is decoupled from the screen layout.
+ * - Off-screen node is always mounted; negligible memory cost accepted.
+ * - Edit/Send actions are stubs until the API layer (src/services/api.js) is wired.
+ */
 import { useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Send, Download, Edit, Eye } from 'lucide-react';

@@ -193,6 +193,18 @@ We have adopted the following core architectural components:
 - **Positive**: Lightweight bundle size, ultra-fast UI response times, and a clear, modular architecture that lowers the barrier to entry for new contributors.
 - **Negative**: Requires manual implementation of complex side effects that more prescriptive state management libraries would otherwise automate.
 
+### ADR-003: InvoiceDetail Component — Stack & Design Decisions
+
+- **Status:** Accepted
+- **Date:** 2026-06-01
+- **Context:** `InvoiceDetail` (`src/pages/invoices/InvoiceDetail.jsx`) must display live invoice/customer data, trigger client-side PDF generation, and navigate to a print-optimised preview — all without a backend round-trip.
+- **Decision:**
+  1. Data is accessed via `useData()` / `useAuth()` Context hooks to avoid prop-drilling and keep the component decoupled from the data-fetching layer.
+  2. `html2pdf.js` is dynamically imported inside `handleDownload` to exclude it from the initial bundle — loaded only on demand.
+  3. An off-screen `InvoiceLayout` (CSS `left: -9999px`) gives `html2pdf` a fully-rendered A4-styled DOM node without affecting the visible layout.
+  4. `useRef` targets the PDF node to avoid re-renders during the async export flow.
+- **Consequences:** Zero extra network requests and instant page load. PDF fidelity is decoupled from the screen layout. The off-screen node is always mounted (negligible memory cost). Edit/Send actions remain stubs until `src/services/api.js` endpoints are ready.
+
 ### ADR-002: API Gateway Stack Selection (Implementation Reference)
 
 - **Status:** Accepted
