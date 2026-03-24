@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Wallet, Check } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import Logo from '../../components/ui/Logo';
 import ConnectWalletModal from '../../components/ui/ConnectWalletModal';
+import { dispatchWebhook } from '../../services/webhook';
 
 function MailCheckout() {
     const { checkoutId } = useParams();
@@ -16,7 +17,24 @@ function MailCheckout() {
     const { connectWallet } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    // Dispatch checkout.viewed on mount
+    useEffect(() => {
+        dispatchWebhook('checkout.viewed', { id: checkout.id, title: checkout.title });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [checkout.id]);
+
     const handlePay = () => { setIsModalOpen(true); };
+
+    // Dispatch checkout.paid on successful wallet connection
+    const handleConnectSuccess = (walletType) => {
+        dispatchWebhook('checkout.paid', {
+            id: checkout.id,
+            amount: checkout.amount,
+            currency: checkout.currency,
+            walletType,
+        });
+        setIsModalOpen(false);
+    };
 
     return (
         <div className="min-h-screen bg-brand flex items-center justify-center p-6">
@@ -43,6 +61,7 @@ function MailCheckout() {
                 <ConnectWalletModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
+                    onConnect={handleConnectSuccess}
                     connectWalletFn={connectWallet}
                 />
 

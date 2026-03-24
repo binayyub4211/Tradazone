@@ -181,3 +181,74 @@ describe('dispatchWebhook', () => {
         expect(body.payload.id).toBe('CHK-001');
     });
 });
+
+// ─── checkout route webhook triggers ─────────────────────────────────────────────────────
+
+describe('checkout route webhook triggers', () => {
+    it('checkout.created includes id, title, amount, currency, paymentLink', async () => {
+        setWebhookUrl('https://example.com/hook');
+        const mockFetch = vi.fn().mockResolvedValue({ ok: true, status: 200 });
+        vi.stubGlobal('fetch', mockFetch);
+
+        await dispatchWebhook('checkout.created', {
+            id: 'CHK-001',
+            title: 'Pro Plan',
+            amount: '150',
+            currency: 'STRK',
+            paymentLink: 'https://pay.tradazone.com/CHK-001',
+        });
+
+        const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+        expect(body.event).toBe('checkout.created');
+        expect(body.payload).toMatchObject({
+            id: 'CHK-001',
+            title: 'Pro Plan',
+            amount: '150',
+            currency: 'STRK',
+            paymentLink: 'https://pay.tradazone.com/CHK-001',
+        });
+    });
+
+    it('checkout.viewed includes id and title', async () => {
+        setWebhookUrl('https://example.com/hook');
+        const mockFetch = vi.fn().mockResolvedValue({ ok: true, status: 200 });
+        vi.stubGlobal('fetch', mockFetch);
+
+        await dispatchWebhook('checkout.viewed', { id: 'CHK-002', title: 'Starter Plan' });
+
+        const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+        expect(body.event).toBe('checkout.viewed');
+        expect(body.payload).toMatchObject({ id: 'CHK-002', title: 'Starter Plan' });
+    });
+
+    it('checkout.paid includes id, amount, currency, walletType', async () => {
+        setWebhookUrl('https://example.com/hook');
+        const mockFetch = vi.fn().mockResolvedValue({ ok: true, status: 200 });
+        vi.stubGlobal('fetch', mockFetch);
+
+        await dispatchWebhook('checkout.paid', {
+            id: 'CHK-003',
+            amount: '200',
+            currency: 'STRK',
+            walletType: 'starknet',
+        });
+
+        const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+        expect(body.event).toBe('checkout.paid');
+        expect(body.payload).toMatchObject({
+            id: 'CHK-003',
+            amount: '200',
+            currency: 'STRK',
+            walletType: 'starknet',
+        });
+    });
+
+    it('does not dispatch when no webhook URL is configured', async () => {
+        const mockFetch = vi.fn();
+        vi.stubGlobal('fetch', mockFetch);
+
+        const result = await dispatchWebhook('checkout.created', { id: 'CHK-001' });
+        expect(mockFetch).not.toHaveBeenCalled();
+        expect(result).toEqual({ ok: false, error: 'no_url_configured' });
+    });
+});

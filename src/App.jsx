@@ -26,6 +26,23 @@ import PasswordSettings from './pages/settings/PasswordSettings';
 import { AuthProvider } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
 
+/**
+ * Webhook integration — checkout events
+ *
+ * The following checkout lifecycle events are dispatched via
+ * `src/services/webhook.js` (dispatchWebhook) at the route level:
+ *
+ * | Event              | Route / Component         | Trigger                          |
+ * |--------------------|---------------------------|----------------------------------|
+ * | checkout.created   | /checkout/create          | Form submit in CreateCheckout    |
+ * | checkout.viewed    | /pay/:checkoutId          | Mount of MailCheckout            |
+ * | checkout.paid      | /pay/:checkoutId          | Successful wallet connect        |
+ *
+ * The webhook endpoint is configured via `VITE_WEBHOOK_URL` (build-time) or
+ * through Settings > Payments at runtime. See `src/services/webhook.js` for
+ * the full dispatch contract and retry logic.
+ */
+
 function App() {
   return (
     <AuthProvider>

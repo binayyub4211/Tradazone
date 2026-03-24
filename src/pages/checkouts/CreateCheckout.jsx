@@ -5,6 +5,7 @@ import Input from '../../components/forms/Input';
 import Button from '../../components/forms/Button';
 import { useData } from '../../context/DataContext';
 import Logo from '../../components/ui/Logo';
+import { dispatchWebhook } from '../../services/webhook';
 
 function CreateCheckout() {
     const navigate = useNavigate();
@@ -13,7 +14,15 @@ function CreateCheckout() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        addCheckout(formData);
+        const checkout = addCheckout(formData);
+        // Dispatch checkout.created webhook — fire-and-forget
+        dispatchWebhook('checkout.created', {
+            id: checkout.id,
+            title: checkout.title,
+            amount: checkout.amount,
+            currency: checkout.currency,
+            paymentLink: checkout.paymentLink,
+        });
         navigate('/checkout');
     };
 
