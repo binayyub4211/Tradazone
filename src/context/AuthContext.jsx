@@ -671,6 +671,7 @@ export function AuthProvider({ children }) {
             } catch (_) {
                 // Swallow: disconnect is best-effort; always clear local state
             }
+
         }
         logout();
     };
@@ -713,6 +714,8 @@ export function AuthProvider({ children }) {
  * @example
  * const { connectWallet, user, wallet } = useAuth();
  */
+// eslint-disable-next-line react-refresh/only-export-components
+
 export function useAuth() {
     const context = useContext(AuthContext);
     if (!context) throw new Error("useAuth must be used within an AuthProvider");

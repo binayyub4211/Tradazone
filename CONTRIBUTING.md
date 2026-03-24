@@ -23,6 +23,32 @@ npm run lint
 npm run build
 ```
 
+## 🛠️ CI/CD Pipeline
+
+We use **GitHub Actions** to ensure code quality and automate our deployment process.
+
+### Automated Checks
+
+Every pull request and push to the `main` branch triggers our CI pipeline, which performs the following steps:
+
+1.  **Environment Setup**: Sets up the Node.js environment (v20).
+2.  **Dependency Installation**: Runs `npm ci` for a clean, reproducible installation.
+3.  **Linting**: Runs `npm run lint` to enforce code style and catch potential errors. **This step must pass for the build to proceed.**
+4.  **Building**: Runs `npm run build` to verify the project builds correctly.
+5.  **Deployment**: If the push is to the `main` branch, the project is automatically deployed to GitHub Pages.
+
+### Manual Verification
+
+Before submitting a pull request, please ensure your changes pass the same checks locally:
+
+```bash
+# Run linting
+npm run lint
+
+# Verify build
+npm run build
+```
+
 ## SignUp Onboarding Guide
 
 Primary file: `src/pages/auth/SignUp.jsx`
@@ -50,16 +76,48 @@ Manual test checklist for SignUp:
 - Modal opens, closes, and triggers success callback without console errors.
 - `localStorage.getItem("tradazone_onboarded")` is `"false"` right after successful connect.
 
-## Code Change Standards
+## 🤝 How to Contribute
 
-- Follow existing naming conventions (`PascalCase` components, `camelCase` helpers/hooks).
-- Reuse existing form and UI components before adding new primitives.
-- Keep modules focused and avoid unrelated refactors in the same pull request.
+1.  **Fork** this repository.
+2.  **Create a feature branch**:
+    ```bash
+    git checkout -b feature/your-feature-name
+    ```
+3.  **Commit your changes** with a clear message:
+    ```bash
+    git commit -m "feat: add your feature description"
+    ```
+4.  **Push** to your branch:
+    ```bash
+    git push origin feature/your-feature-name
+    ```
+5.  **Open a Pull Request** — describe what you changed and why.
 
-## Pull Request Guidelines
+## 📝 Commit Message Convention
 
-1. Create a branch (`feature/<name>` or `fix/<name>`).
-2. Make focused commits with clear intent (`feat:`, `fix:`, `docs:`, etc.).
-3. Include a short test plan in the PR description.
-4. Link related issue(s), screenshots, or recordings when UI changes are involved.
+We follow a simple convention for commit messages to keep our history clean and readable:
+
+| Prefix | When to use |
+|---|---|
+| `feat:` | A new feature |
+| `fix:` | A bug fix |
+| `style:` | UI/CSS changes with no logic change |
+| `refactor:` | Code restructuring without behavior change |
+| `docs:` | Documentation updates |
+| `chore:` | Dependency updates, build configs |
+
+## 🐞 Reporting Issues
+
+Found a bug or have a suggestion? [Open an issue](https://github.com/FolushoJoseph/Tradazone/issues) and include:
+- A clear description of the problem.
+- Steps to reproduce.
+- Expected vs actual behavior.
+- Screenshots if applicable.
+
+## 🎨 Code Style
+
+- Keep components focused and single-purpose.
+- Co-locate styles with components where possible.
+- Follow existing naming conventions (`PascalCase` for components, `camelCase` for hooks/utils).
+- Avoid hardcoded values — use the data/context layer.
 
