@@ -125,6 +125,33 @@ describe('completeWalletLogin', () => {
   });
 });
 
+// ─── disconnectAll ───────────────────────────────────────────────────────────
+
+describe('disconnectAll', () => {
+  it('resets auth and wallet state', async () => {
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    act(() => result.current.completeWalletLogin('GADDR', 'stellar'));
+    await act(async () => { await result.current.disconnectAll(); });
+    expect(result.current.user.isAuthenticated).toBe(false);
+    expect(result.current.wallet.isConnected).toBe(false);
+    expect(result.current.walletType).toBeNull();
+  });
+
+  it('removes last wallet key from localStorage', async () => {
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    act(() => result.current.completeWalletLogin('GADDR', 'stellar'));
+    await act(async () => { await result.current.disconnectAll(); });
+    expect(localStorage.getItem(WALLET_KEY)).toBeNull();
+  });
+
+  it('removes session from localStorage', async () => {
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    act(() => result.current.completeWalletLogin('GADDR', 'stellar'));
+    await act(async () => { await result.current.disconnectAll(); });
+    expect(localStorage.getItem(SESSION_KEY)).toBeNull();
+  });
+});
+
 // ─── useAuth guard ────────────────────────────────────────────────────────────
 
 describe('useAuth', () => {

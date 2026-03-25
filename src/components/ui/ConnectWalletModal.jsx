@@ -381,7 +381,7 @@ function ConnectWalletModal({ isOpen, onClose, onConnect, connectWalletFn }) {
      */
     const [view, setView] = useState('primary');
 
-    const { completeWalletLogin, isConnecting: isAuthConnecting } = useAuth();
+    const { completeWalletLogin, isConnecting: isAuthConnecting, wallet, disconnectAll } = useAuth();
     const lobstrHook = useLobstr();
     const installed = useWalletDetection();
 
@@ -760,6 +760,24 @@ function ConnectWalletModal({ isOpen, onClose, onConnect, connectWalletFn }) {
                                     </div>
                                 </div>
                             </div>
+                        )}
+
+                        {/* ---------------------------------------------------------------- */}
+                        {/* Bulk-disconnect — visible only when a wallet is connected.       */}
+                        {/* Calls disconnectAll() from AuthContext to clear all wallet       */}
+                        {/* sessions and localStorage keys in a single action.               */}
+                        {/* ---------------------------------------------------------------- */}
+                        {wallet.isConnected && (
+                            <button
+                                onClick={async () => {
+                                    await disconnectAll();
+                                    onClose();
+                                }}
+                                disabled={connecting !== null}
+                                className="mt-5 w-full text-center text-sm font-semibold text-red-500 hover:text-red-700 transition-colors p-3 rounded-lg border border-transparent hover:border-red-100 hover:bg-red-50 disabled:opacity-50"
+                            >
+                                Disconnect all wallets
+                            </button>
                         )}
                     </div>
                 </div>

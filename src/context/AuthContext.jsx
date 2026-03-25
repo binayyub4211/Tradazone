@@ -676,6 +676,33 @@ export function AuthProvider({ children }) {
         logout();
     };
 
+    // ── disconnectAll ────────────────────────────────────────────────────────
+
+    /**
+     * Bulk-disconnects all wallet sessions.
+     *
+     * Clears every wallet-related key from localStorage and resets all auth
+     * and wallet state to unauthenticated defaults. For Starknet, a
+     * programmatic disconnect is attempted before clearing local state.
+     *
+     * Intended for use by {@link ConnectWalletModal} to let users remove all
+     * connected wallets in a single action.
+     *
+     * @returns {Promise<void>}
+     */
+    const disconnectAll = async () => {
+        if (walletType === "starknet") {
+            try {
+                const { disconnect } = await import("get-starknet");
+                await disconnect();
+            } catch (_) {
+                // best-effort
+            }
+        }
+        localStorage.removeItem(WALLET_KEY);
+        logout();
+    };
+
     // ── Context value ────────────────────────────────────────────────────────
 
     return (
@@ -689,6 +716,7 @@ export function AuthProvider({ children }) {
             logout,
             connectWallet,
             disconnectWallet,
+            disconnectAll,
             completeWalletLogin,
             lastWallet,
             isConnecting,
