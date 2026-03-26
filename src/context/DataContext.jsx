@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { dispatchWebhook, setWebhookUrl, getWebhookUrl } from '../services/webhook';
+import { toUtcMidnightIso } from '../utils/date';
 
 const DataContext = createContext(null);
 
@@ -46,7 +47,12 @@ export function DataProvider({ children }) {
             totalSpent: '0',
             currency: 'STRK',
             invoiceCount: 0,
-            createdAt: new Date().toISOString().split('T')[0],
+            // ISSUE: Date parsing is inconsistent across timezones.
+            // Previously we stored a date-only string via `toISOString().split('T')[0]`.
+            // If any boundary later re-parses that date-only value using `new Date(value)`,
+            // the day can shift depending on runtime timezone.
+            // We now store a full ISO timestamp with explicit timezone (`Z`) to eliminate ambiguity.
+            createdAt: new Date().toISOString(),
         };
         setCustomers((prev) => {
             const next = [...prev, newCustomer];
@@ -98,8 +104,10 @@ export function DataProvider({ children }) {
                 amount: total.toLocaleString(),
                 currency: 'STRK',
                 status: 'pending',
-                dueDate: data.dueDate,
-                createdAt: new Date().toISOString().split('T')[0],
+                // Pin `dueDate` to UTC midnight for timezone-stable day semantics.
+                dueDate: toUtcMidnightIso(data.dueDate),
+                // Store full ISO timestamp (`Z`) to avoid day shifts.
+                createdAt: new Date().toISOString(),
                 items: resolvedItems,
             };
             setInvoices((prev) => {
@@ -123,7 +131,8 @@ export function DataProvider({ children }) {
                 amount: data.amount,
                 currency: data.currency || 'STRK',
                 status: 'active',
-                createdAt: new Date().toISOString().split('T')[0],
+                // Store full ISO timestamp (`Z`) to avoid day shifts.
+                createdAt: new Date().toISOString(),
                 paymentLink: `https://pay.tradazone.com/${id}`,
                 views: 0,
                 payments: 0,
@@ -156,23 +165,26 @@ export function DataProvider({ children }) {
      */
     const markCheckoutPaid = useCallback(
         (checkoutId, customerId, walletType = '') => {
-            let paidCheckout;
+            // Compute the checkout snapshot up-front so totals/webhooks don't
+            // depend on React state updater execution order.
+            const paidCheckout = checkouts.find((c) => c.id === checkoutId);
+            const added = parseFloat(paidCheckout?.amount || '0') || 0;
+
             setCheckouts((prev) => {
                 const next = prev.map((c) =>
                     c.id === checkoutId
                         ? { ...c, status: 'paid', payments: c.payments + 1 }
                         : c
                 );
-                paidCheckout = next.find((c) => c.id === checkoutId);
                 save(KEYS.checkouts, next);
                 return next;
             });
+
             if (customerId) {
                 setCustomers((prev) => {
                     const next = prev.map((c) => {
                         if (c.id !== customerId) return c;
                         const prevSpent = parseFloat(c.totalSpent.replace(/,/g, '')) || 0;
-                        const added = parseFloat(paidCheckout?.amount || '0') || 0;
                         return {
                             ...c,
                             totalSpent: (prevSpent + added).toLocaleString(),
@@ -183,6 +195,7 @@ export function DataProvider({ children }) {
                     return next;
                 });
             }
+
             // Fire checkout.paid webhook (non-blocking)
             if (paidCheckout) {
                 dispatchWebhook('checkout.paid', {
@@ -195,7 +208,7 @@ export function DataProvider({ children }) {
                 });
             }
         },
-        []
+        [checkouts]
     );
 
     return (
