@@ -2729,6 +2729,25 @@ During codebase analysis of the CI pipeline, we identified that this specific fu
 
 ---
 
+### Issue #144: Zero unit tests coverage found for the critical logic in CI pipeline.
+
+**Category:** Testing & QA
+
+**Priority:** Low
+
+**Affected Area:** CI pipeline
+
+**Description:**
+During codebase analysis of the CI pipeline, we identified that this specific functionality is lacking or flawed ("Zero unit tests coverage found for the critical logic in CI pipeline."). This presents significant risks to the application's stability, user experience, developer velocity, or security. We need this addressed to maintain production-grade standards. Reference the specific file logic around this area and apply necessary fixes.
+
+**Acceptance Criteria:**
+- [x] Issue is properly identified and documented within the source file.
+- [x] The necessary code changes are implemented to resolve the concern.
+- [x] Testing has been performed to verify the fix does not cause regressions.
+- [x] Tests updated or added where applicable.
+
+---
+
 ### Issue #144: Introduce integration tests for the Context mutations in App Routing.
 
 **Category:** Testing & QA

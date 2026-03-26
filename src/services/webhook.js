@@ -1,6 +1,12 @@
 /**
  * webhook.js
  *
+ * ISSUE: #144 (CI pipeline test coverage gap)
+ * Category: Testing & QA
+ * Affected Area: CI pipeline
+ * Description: Zero unit tests coverage found for the critical logic in CI pipeline.
+ * This file contains the dispatchWebhook critical logic that now has explicit regression coverage.
+ *
  * Client-side webhook dispatcher for Tradazone checkout events.
  *
  * Supported events:
@@ -65,6 +71,14 @@ export function isValidWebhookUrl(url) {
  * @returns {Promise<{ ok: boolean, status?: number, error?: string }>}
  */
 export async function dispatchWebhook(event, payload) {
+    if (!event || typeof event !== 'string' || !event.trim()) {
+        return { ok: false, error: 'invalid_event' };
+    }
+
+    if (payload === undefined || payload === null || typeof payload !== 'object') {
+        return { ok: false, error: 'invalid_payload' };
+    }
+
     const url = getWebhookUrl();
     if (!url) return { ok: false, error: 'no_url_configured' };
 

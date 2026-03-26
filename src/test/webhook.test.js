@@ -73,6 +73,16 @@ describe('getWebhookUrl', () => {
 // ─── dispatchWebhook ──────────────────────────────────────────────────────────
 
 describe('dispatchWebhook', () => {
+    it('returns invalid_event when event is empty', async () => {
+        const result = await dispatchWebhook('', { id: 'CHK-001' });
+        expect(result).toEqual({ ok: false, error: 'invalid_event' });
+    });
+
+    it('returns invalid_payload when payload is not an object', async () => {
+        const result = await dispatchWebhook('checkout.created', null);
+        expect(result).toEqual({ ok: false, error: 'invalid_payload' });
+    });
+
     it('returns no_url_configured when no URL is set', async () => {
         const result = await dispatchWebhook('checkout.created', { id: 'CHK-001' });
         expect(result).toEqual({ ok: false, error: 'no_url_configured' });
