@@ -11,6 +11,14 @@
  * This component is large due to multi-wallet support; size limits and monitoring
  * are enforced in vite.config.js and CI to prevent bundle bloat.
  *
+ * ISSUE #36: Focus trap implementation for modal accessibility
+ * Category: UI/UX
+ * Priority: Medium
+ * Affected Area: Checkout flow
+ * Description: Implemented proper focus management using useFocusTrap hook.
+ * Focus is now trapped within the modal, keyboard navigation works correctly,
+ * and focus is restored to the trigger element when the modal closes.
+ *
  * Supports the following wallet providers:
  *  - LOBSTR  (Stellar / XLM)
  *  - Argent  (Starknet / STRK)
@@ -36,6 +44,7 @@ import {
     useAuthWalletState,
 } from '../../context/AuthContext';
 import { useVirtualList } from '../../hooks/useVirtualList';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 // ISSUE #70: Virtualization constants for the wallet list.
 // Wallets enter via EIP-6963 discovery and can be numerous; rendering every
@@ -160,6 +169,14 @@ function ConnectWalletModal({ isOpen, onClose, onConnect, connectWalletFn }) {
 
     const lobstrHook = useLobstr();
 
+    // ISSUE #36 FIX: Focus trap for accessibility
+    const modalRef = useFocusTrap({
+        isOpen,
+        onClose,
+        initialFocus: true,
+        restoreFocus: true,
+    });
+
     // Reset transient state each time the modal is opened
     useEffect(() => {
         if (isOpen) {
@@ -273,9 +290,15 @@ function ConnectWalletModal({ isOpen, onClose, onConnect, connectWalletFn }) {
             <div
                 className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm transition-opacity"
                 onClick={() => !connecting && onClose()}
+                aria-hidden="true"
             />
 
-            <div className="
+            <div
+                ref={modalRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="modal-title"
+                className="
                 fixed z-40
                 bottom-0 left-0 right-0
                 lg:bottom-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-full lg:max-w-md
@@ -310,7 +333,7 @@ function ConnectWalletModal({ isOpen, onClose, onConnect, connectWalletFn }) {
                     </div>
 
                     <div className="p-6">
-                        <h2 className="text-xl font-bold text-t-primary mb-2">Connect your wallet</h2>
+                        <h2 id="modal-title" className="text-xl font-bold text-t-primary mb-2">Connect your wallet</h2>
                         <p className="text-sm text-t-muted mb-6">
                             Choose how you'd like to connect to Tradazone.
                         </p>
