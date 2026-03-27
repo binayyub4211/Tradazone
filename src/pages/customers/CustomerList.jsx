@@ -1,4 +1,14 @@
 /**
+ * @fileoverview CustomerList — customer management page.
+ *
+ * ISSUE: #183 (Build size limits for CustomerList)
+ * Category: DevOps & Infrastructure
+ * Affected Area: CustomerList
+ * Description: Implement production build size limits and monitoring for CustomerList.
+ * This component displays customer data with search, filtering, and navigation
+ * capabilities; build size monitoring is enforced in vite.config.js and CI
+ * to prevent bundle bloat.
+ *
  * @dev Note: Local development and testing for the CustomerList module
  * has been containerized to ensure cross-platform stability.
  * Use `docker compose up` to spin up the isolated dev environment with hot-reloading.
