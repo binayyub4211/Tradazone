@@ -16,11 +16,27 @@ import { useDebounce } from "../../hooks/useDebounce"; // New hook
 import { formatUtcDate } from "../../utils/date";
 
 function InvoiceDetail() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const invoiceRef = useRef(null);
-  const { user } = useAuth();
-  const { invoices, customers } = useData();
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const invoiceRef = useRef(null);
+    const { user } = useAuth();
+    const { invoices, customers } = useData();
+    const invoice = invoices.find(inv => inv.id === id);
+    const customer = customers.find(c => c.id === invoice?.customerId);
+
+    // #21: bail out early if the session expired while the page was open
+    useEffect(() => {
+        if (!loadSession()) {
+            navigate('/signin?reason=expired', { replace: true });
+        }
+    }, [navigate]);
+
+    if (!invoice) return <div className="p-8"><p className="text-t-muted">Invoice not found</p></div>;
+
+    const sender = {
+        name: user?.name || 'Tradazone',
+        email: user?.email || 'hello@tradazone.com',
+    };
 
   // Search state
   const [searchTerm, setSearchTerm] = useState("");
