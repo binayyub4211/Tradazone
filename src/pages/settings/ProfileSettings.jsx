@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { User } from 'lucide-react';
 import Input from '../../components/forms/Input';
 import Button from '../../components/forms/Button';
 import RichTextEditor from '../../components/forms/RichTextEditor';
@@ -68,8 +69,14 @@ function ProfileSettings() {
 
     return (
         <div>
-            <StagingBanner />
-            <h2 className="text-lg font-semibold mb-6 mt-4">Profile Settings</h2>
+            <h2 className="text-lg font-semibold mb-6">Profile Settings</h2>
+            {!hasProfile && (
+                <EmptyState
+                    icon={User}
+                    title="No profile information yet"
+                    description="Fill in your details below to complete your profile."
+                />
+            )}
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <Input label="Full Name" placeholder="Enter your name" value={formData.name} onChange={handleChange('name')} required error={errors.name} />
