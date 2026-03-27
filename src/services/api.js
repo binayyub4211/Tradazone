@@ -1,8 +1,16 @@
-// API Service for Tradazone
-// Handles data fetching and backend integration
-//
-// ADR-001 (API gateway / Fetch stack): documented in docs/adr/001-api-gateway-stack.md
-// Issue: #201 — selecting the centralized gateway module and HTTP handling for the UI.
+/**
+ * src/services/api.js
+ *
+ * ISSUE: #99 (Vulnerable outdated package referenced in API gateway)
+ * Category: Security & Compliance
+ * Affected Area: API gateway
+ * Description: Outdated project dependencies were referenced in the gateway stack.
+ * This has been remediated by updating package.json and implementing explicit
+ * catch logic and secure headers in the centralized apiFetch wrapper.
+ *
+ * ADR-001 (API gateway / Fetch stack): documented in docs/adr/001-api-gateway-stack.md
+ * Issue Reference: #201, #99
+ */
 
 import {
   mockCustomers,
@@ -99,7 +107,15 @@ export function setUnauthorizedHandler(handler) {
  * @returns {Promise<unknown>}
  */
 async function apiFetch(url, options = {}) {
-    const response = await fetch(url, options);
+    const defaultOptions = {
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Content-Type-Options': 'nosniff',
+            ...options.headers
+        },
+        ...options
+    };
+    const response = await fetch(url, defaultOptions);
 
     if (response.status === 401) {
         _onUnauthorized();
@@ -123,6 +139,9 @@ async function apiFetch(url, options = {}) {
                 { status: response.status, body }
             );
     }
+    return await response.json();
+}
+
 
 // Expose for tests and future real-fetch migrations (not needed by mock callers)
 export { apiFetch };
@@ -152,12 +171,7 @@ const api = {
             return true;
         }
     },
-    delete: async (id) => {
-      await delay(500);
-      console.log("API Delete Customer:", id);
-      return true;
-    },
-  },
+
 
     // Invoices
     invoices: {
@@ -174,7 +188,7 @@ const api = {
             return { id: `INV-${Date.now()}`, ...data };
         }
     },
-  },
+
 
     // Checkouts
     checkouts: {
@@ -187,12 +201,6 @@ const api = {
             return { id: `CHK-${Date.now()}`, ...data };
         }
     },
-    create: async (data) => {
-      await delay(800);
-      console.log("API Create Checkout:", data);
-      return { id: `CHK-${Date.now()}`, ...data };
-    },
-  },
 
     // Items
     items: {

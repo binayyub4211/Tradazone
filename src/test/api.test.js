@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { apiFetch, setUnauthorizedHandler } from '../services/api';
+import api, { apiFetch, setUnauthorizedHandler, paginate } from '../services/api';
+
 
 // ─── apiFetch ────────────────────────────────────────────────────────────────
 
@@ -18,6 +19,21 @@ describe("apiFetch", () => {
     const data = await apiFetch("/api/customers");
     expect(data).toEqual({ id: 1, name: "Alice" });
   });
+
+  it("includes secure headers (X-Content-Type-Options: nosniff)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await apiFetch("/api/any");
+    
+    const options = fetchMock.mock.calls[0][1];
+    expect(options.headers["X-Content-Type-Options"]).toBe("nosniff");
+  });
+
 
   it("throws an enriched error on non-401 failure", async () => {
     vi.stubGlobal(
