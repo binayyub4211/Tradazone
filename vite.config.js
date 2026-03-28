@@ -36,6 +36,13 @@ export default defineConfig(({ mode }) => {
             if (id.includes('@lobstrco/signer-extension-api') || id.includes('get-starknet') || id.includes('ethers')) {
               return 'wallet';
             }
+            // Chart.js is a heavy library (~200 KB gzip). It is only needed
+            // when a chart is rendered, so it must live in its own chunk and
+            // never be pulled into the main or checkout bundles eagerly.
+            // See: LazyChart.jsx for the dynamic-import entry point.
+            if (id.includes('chart.js') || id.includes('react-chartjs-2')) {
+              return 'chartjs';
+            }
             // UI libraries
             if (id.includes('lucide-react')) {
               return 'ui';

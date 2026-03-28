@@ -24,13 +24,6 @@ function InvoiceDetail() {
     const invoice = invoices.find(inv => inv.id === id);
     const customer = customers.find(c => c.id === invoice?.customerId);
 
-    // #21: bail out early if the session expired while the page was open
-    useEffect(() => {
-        if (!loadSession()) {
-            navigate('/signin?reason=expired', { replace: true });
-        }
-    }, [navigate]);
-
     if (!invoice) return <div className="p-8"><p className="text-t-muted">Invoice not found</p></div>;
 
     const sender = {
@@ -41,9 +34,6 @@ function InvoiceDetail() {
   // Search state
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearch = useDebounce(searchTerm, 300);
-
-  const invoice = invoices.find((inv) => inv.id === id);
-  const customer = customers.find((c) => c.id === invoice?.customerId);
 
   /**
    * Filtered items list - Memoized to prevent recalculation on every render
@@ -65,11 +55,6 @@ function InvoiceDetail() {
         <p className="text-t-muted">Invoice not found</p>
       </div>
     );
-
-  const sender = {
-    name: user?.name || "Tradazone",
-    email: user?.email || "hello@tradazone.com",
-  };
 
   const calculateTotal = () => {
     return invoice.items.reduce(
