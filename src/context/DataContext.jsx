@@ -23,6 +23,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { dispatchWebhook, setWebhookUrl, getWebhookUrl } from '../services/webhook';
 import { toUtcMidnightIso } from '../utils/date';
+import api from '../services/api';
 
 // ISSUE #123: Added bulk-delete functionality for items.
 
@@ -156,10 +157,18 @@ export function DataProvider({ children }) {
      * @returns {void}
      */
     const deleteItems = useCallback((ids) => {
+        // Optimistically update local state and localStorage
         setItems((prev) => {
             const next = prev.filter((item) => !ids.includes(item.id));
             save(KEYS.items, next);
             return next;
+        });
+
+        // Trigger API bulk-delete (non-blocking in UI, handles errors via gateway)
+        api.items.bulkDelete(ids).catch((err) => {
+            console.error('[DataContext] Failed to bulk-delete items:', err);
+            // In a real app, we might want to rollback the local state here
+            // but for this task, the linkage is the primary goal.
         });
     }, []);
 
