@@ -108,13 +108,42 @@ describe('SignUp', () => {
         expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
     });
 
+    it('exports a csv snapshot of the current signup state', async () => {
+        const user = userEvent.setup();
+        const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+        let appendedLink = null;
+        const realAppendChild = document.body.appendChild.bind(document.body);
+        const realRemoveChild = document.body.removeChild.bind(document.body);
+
+        const appendSpy = vi.spyOn(document.body, 'appendChild').mockImplementation((element) => {
+            appendedLink = element;
+            return realAppendChild(element);
+        });
+        const removeSpy = vi.spyOn(document.body, 'removeChild').mockImplementation((element) => {
+            return realRemoveChild(element);
+        });
+
+        mockUser = { isAuthenticated: false, walletAddress: null, walletType: null };
+
+        await renderSignUp();
+        await user.click(screen.getByRole('button', { name: /export signup data to csv/i }));
+
+        expect(appendedLink).toBeTruthy();
+        expect(appendedLink.getAttribute('download')).toBe('auth_data.csv');
+        expect(clickSpy).toHaveBeenCalled();
+
+        appendSpy.mockRestore();
+        removeSpy.mockRestore();
+        clickSpy.mockRestore();
+    });
+
     it('falls back to the auth user wallet metadata when modal data is missing', async () => {
         const user = userEvent.setup();
         mockUser = { isAuthenticated: false, walletAddress: '0xFALLBACK', walletType: 'stellar' };
         mockOnConnectArgs = { walletAddress: null, walletType: null };
 
         await renderSignUp();
-        await user.click(screen.getByText('Connect Wallet'));
+        await user.click(screen.getByRole('button', { name: /connect wallet/i }));
         await user.click(screen.getByTestId('mock-connect-success'));
 
         expect(mockDispatchWebhook).toHaveBeenCalledWith('user.signed_up', {

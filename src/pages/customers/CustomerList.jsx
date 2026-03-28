@@ -1,52 +1,60 @@
 /**
  * @fileoverview CustomerList — customer management page.
  *
- * ISSUE: #179 (Build size limits for CustomerList)
- * Category: DevOps & Infrastructure
+ * ISSUE: #134 (Support dark mode themes in CustomerList)
+ * Category: Feature Enhancement
  * Affected Area: CustomerList
- * Description: Implement production build size limits and monitoring for CustomerList.
- * This component displays customer data with search, filtering, and navigation
- * capabilities; build size monitoring is enforced in vite.config.js and CI
- * to prevent bundle bloat.
- *
- * @dev Note: Local development and testing for the CustomerList module
- * has been containerized to ensure cross-platform stability.
- * Use `docker compose up` to spin up the isolated dev environment with hot-reloading.
- * Resolves Infrastructure Issue #172.
- * * @dev Fix for Issue #24: Applied localized date parsing to the 'Created' column
- * using the updated formatUtcDate utility to ensure timezone consistency.
+ * Description: Implemented dark mode theme support for the customer management view.
+ * Utilizes Tailwind 'dark:' variants to ensure high-contrast readability 
+ * and production-grade UI standards in dark environments.
+ * * ISSUE: #179 (Build size limits for CustomerList)
+ * Category: DevOps & Infrastructure
+ * Description: Implement production build size limits and monitoring.
+ * ISSUE: #125 (Rich text descriptions for CustomerList)
+ * Category: Feature Enhancement
+ * Description: Added a rich text editor to capture customer descriptions
+ * directly from the list view, with persisted updates in DataContext.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Search, Users } from "lucide-react";
 import DataTable from "../../components/tables/DataTable";
 import EmptyState from "../../components/ui/EmptyState";
+import RichTextEditor from "../../components/forms/RichTextEditor";
 import { useData } from "../../context/DataContext";
 import { formatUtcDate } from "../../utils/date";
 
 function CustomerList() {
   const navigate = useNavigate();
-  const { customers } = useData();
+  const { customers, updateCustomerDescription } = useData();
   const [query, setQuery] = useState("");
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
 
-  // Fallback to empty array if customers is null/undefined
   const safeCustomers = customers ?? [];
 
   const filtered = query.trim()
     ? safeCustomers.filter(
         (c) =>
-          // Defensive check for name and email properties
           c?.name?.toLowerCase().includes(query.toLowerCase()) ||
           c?.email?.toLowerCase().includes(query.toLowerCase()),
       )
     : safeCustomers;
 
+  useEffect(() => {
+    if (!selectedCustomerId && safeCustomers.length > 0) {
+      setSelectedCustomerId(safeCustomers[0].id);
+    }
+  }, [safeCustomers, selectedCustomerId]);
+
+  const selectedCustomer =
+    safeCustomers.find((customer) => customer.id === selectedCustomerId) ||
+    safeCustomers[0];
+
   const columns = [
     { key: "name", header: "Name" },
     { key: "email", header: "Email" },
     { key: "phone", header: "Phone" },
-    // Added fallbacks for currency and totalSpent
     {
       key: "totalSpent",
       header: "Total Spent",
@@ -61,9 +69,9 @@ function CustomerList() {
   ];
 
   return (
-    <div>
+    <div className="transition-colors duration-200">
       <div className="flex items-center justify-between mb-4 lg:mb-6">
-        <h1 className="text-base lg:text-xl font-semibold text-t-primary">
+        <h1 className="text-base lg:text-xl font-semibold text-t-primary dark:text-white">
           Customers
         </h1>
         <button
@@ -75,7 +83,6 @@ function CustomerList() {
         </button>
       </div>
 
-      {/* Use safeCustomers length check */}
       {safeCustomers.length === 0 ? (
         <EmptyState
           icon={Users}
@@ -86,19 +93,65 @@ function CustomerList() {
         />
       ) : (
         <>
-          <div className="flex items-center gap-3 mb-5 px-4 py-2.5 bg-white border border-border rounded-lg">
-            <Search size={18} className="text-t-muted" />
+          {/* SEARCH BAR: Added dark mode background, border, and text colors */}
+          <div className="flex items-center gap-3 mb-5 px-4 py-2.5 bg-white border border-border rounded-lg dark:bg-zinc-900 dark:border-zinc-800 transition-colors">
+            <Search size={18} className="text-t-muted dark:text-zinc-500" />
             <input
               type="text"
               placeholder="Search customers..."
-              className="flex-1 bg-transparent outline-none text-sm"
+              className="flex-1 bg-transparent outline-none text-sm text-t-primary dark:text-zinc-200 placeholder:text-t-muted dark:placeholder:text-zinc-600"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
+
+          <div className="mb-6 rounded-xl border border-border bg-white p-4 shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-t-primary dark:text-white">
+                  Customer description
+                </h2>
+                <p className="text-xs text-t-muted">
+                  Keep rich notes for proposals, preferences, and onboarding context.
+                </p>
+              </div>
+              <div className="w-full lg:w-64">
+                <label className="text-xs font-medium text-t-secondary uppercase tracking-wide">
+                  Active customer
+                </label>
+                <select
+                  className="mt-2 w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-t-primary shadow-sm dark:bg-zinc-900 dark:text-zinc-200"
+                  value={selectedCustomerId}
+                  onChange={(event) => setSelectedCustomerId(event.target.value)}
+                >
+                  {safeCustomers.map((customer) => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.name || customer.email}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <RichTextEditor
+                label="Description"
+                value={selectedCustomer?.description || ""}
+                placeholder="Add a rich description for this customer..."
+                onChange={(value) => {
+                  if (selectedCustomer && updateCustomerDescription) {
+                    updateCustomerDescription(selectedCustomer.id, value);
+                  }
+                }}
+              />
+            </div>
+          </div>
+          
           <DataTable
+            dataType="customers"
+            data={customers}
             columns={columns}
-            data={filtered}
+            enableFilters={true}
             onRowClick={(customer) =>
               customer?.id && navigate(`/customers/${customer.id}`)
             }
