@@ -16,6 +16,12 @@
  * Category: DevOps & Infrastructure
  * Description: This page is complex and includes heavy dependencies like html2pdf.js.
  * Build size is monitored via separate chunking in vite.config.js to prevent regression.
+ * 
+ * ISSUE #88: Vulnerable outdated package referenced in InvoiceDetail.
+ * Category: Security & Compliance
+ * Status: RESOLVED ✓
+ * Description: Outdated versions of html2pdf.js (< 0.14.0) were vulnerable to XSS (CVE-2026-22787).
+ * Resolution: Locked dependency to 0.14.0 and added explicit error handling for client-side generation.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
@@ -98,18 +104,25 @@ function InvoiceDetail() {
   }, [invoice, debouncedSearch]);
 
   const handleDownload = async () => {
-    const html2pdf = (await import("html2pdf.js")).default;
-    const element = invoiceRef.current;
+    if (!invoiceRef.current) return;
+    
+    try {
+      const html2pdf = (await import("html2pdf.js")).default;
+      const element = invoiceRef.current;
 
-    const options = {
-      margin: 0,
-      filename: `${invoice.id}.pdf`,
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-    };
+      const options = {
+        margin: 0,
+        filename: `${invoice.id}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      };
 
-    html2pdf().set(options).from(element).save();
+      await html2pdf().set(options).from(element).save();
+    } catch (error) {
+      console.error("PDF Generation Error (Issue #88 Remediation):", error);
+      alert("Failed to generate PDF. Please try printing via browser instead.");
+    }
   };
 
   const handleExportCsv = () => {
