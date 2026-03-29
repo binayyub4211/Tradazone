@@ -359,7 +359,7 @@ export function useDataFilters(type) {
       if (saved) {
         setFilters(JSON.parse(saved));
       }
-    } catch {
+    } catch (_err) {
       // Ignore parse errors
     }
   }, [type]);
@@ -369,7 +369,7 @@ export function useDataFilters(type) {
       setFilters(newFilters);
       try {
         localStorage.setItem(`tradazone_filters_${type}`, JSON.stringify(newFilters));
-      } catch {
+      } catch (_err) {
         // Ignore storage errors
       }
     },

@@ -4,10 +4,12 @@
  * Supports optional filter/sort controls for data sets that opt in through
  * DataContext filter configs, while preserving the original plain table output
  * for callers that do not enable filtering.
+ *
+ * Build note: Do not duplicate `handleSelectItem` or nest `useVirtualList` inside
+ * `useCallback` — that breaks the bundler (unclosed callback / parse errors).
  */
 
 import { useCallback, useMemo } from "react";
-import { ChevronDown, ChevronUp, Search, X } from "lucide-react";
 import {
   ChevronDown,
   ChevronUp,
@@ -131,7 +133,7 @@ function DataTable({
   const isSorted = (field) => filters.sort.field === field;
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      onSelectionChange(rawData.map((item) => item.id));
+      onSelectionChange(filteredData.map((item) => item.id));
     } else {
       onSelectionChange([]);
     }
@@ -145,22 +147,6 @@ function DataTable({
       onSelectionChange(selectedItems.filter((itemId) => itemId !== id));
     }
   };
-
-  const isAllSelected = rawData.length > 0 && selectedItems.length === rawData.length;
-
-  const handleSelectItem = useCallback(
-    (event, id) => {
-      event.stopPropagation();
-
-  // Always call the hook (React rules prohibit conditional hook calls)
-  const { scrollRef, virtualItems, topPadding, bottomPadding } = useVirtualList({
-    items: filteredData,
-    itemHeight: ROW_HEIGHT,
-  });
-
-  const rowsToRender = shouldVirtualize
-    ? virtualItems.map((v) => ({ ...v.item, _virtualIndex: v.index }))
-    : filteredData.map((item, index) => ({ ...item, _virtualIndex: index }));
 
   return (
     <div

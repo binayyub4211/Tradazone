@@ -104,9 +104,11 @@ function InvoiceDetail() {
     );
   }, [invoice, debouncedSearch]);
 
+  // html2pdf must be wrapped in try/catch — an orphaned `catch` breaks production builds.
   const handleDownload = async () => {
-    const html2pdf = (await import("html2pdf.js")).default;
-    const element = pdfRef.current || invoiceRef.current;
+    try {
+      const html2pdf = (await import("html2pdf.js")).default;
+      const element = pdfRef.current || invoiceRef.current;
 
       const options = {
         margin: 0,
